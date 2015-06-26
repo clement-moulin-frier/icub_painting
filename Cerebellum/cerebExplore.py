@@ -4,22 +4,23 @@ import cerebellum
 import numpy as np
 
 class cerebellumInstance:
-    def __init__(self):
+    def __init__(self,US_size=1, CS_size=1,nBasis=20,k_NOI=0.5,LR=5.0, delay=1,SR=10.0,Range=1,update=30):
 
         # Configure Cerebellum
-        self.US_size = 1
-        self.CS_size = 1  # CS size must be different
+        self.US_size = US_size
+        self.CS_size = CS_size  # CS size must be different
         self.crb_V = cerebellum.Cerebellum()
         self.crb_V.config('basis_visual_sim.cfg')
+        self.udp = update
 
-        self.crb_V.plug(self.US_size,20,self.CS_size,0.5,5.0,1,10.0) #nDoF, nBasis, nPNs, k_NOI, beta, delay, SR
+        self.crb_V.plug(self.US_size,nBasis,self.CS_size,k_NOI,LR,delay,SR) #nDoF, nBasis, nPNs, k_NOI, beta, delay, SR
         
         self.crb_V.initTrial()
         self.CRB_V_CR = []
         
         self.opt = 3
         self.n = 0
-        self.R = 0.2
+        self.R = Range
 
     def update(self,CS,US):
         # Connect to CS the distance and to US the 'simulated' touch
@@ -38,19 +39,19 @@ class cerebellumInstance:
                 if c < (i)*self.R/(self.CS_size):
                     c = 0
                 CS.append(c)
-        print c
 
         u = max(0,US) 
         if u>0:
             u=1
-
+        #print CS
         US_list = [u]
 
         #print US
-        crb_post = self.crb_V.input(np.append(CS, US))
-        self.CRB_V_CR.append(crb_post)
+        crb_post = max(0,self.crb_V.input(np.append(CS, US)))
+        self.CRB_V_CR.append(np.copy(crb_post))
+        print crb_post
         
-        if self.n<30:
+        if self.n<self.udp:
             self.crb_V.doUpdate()
             self.n += 1
         else:
