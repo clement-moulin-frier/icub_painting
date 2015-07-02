@@ -44,8 +44,6 @@ class cerebellarPainter():
         if plot_data:
             ion()
             self.i=0
-            self.fig1=figure()
-            self.fig2=figure()
         return True
 
     def newTarget(self):
@@ -112,19 +110,16 @@ class cerebellarPainter():
         return self.cer.CRB_V_CR
     
     def updatePlot(self):
-        self.fig1.clf()
-        ax = self.fig1.add('1')
-        
-        ax.plot(self.cer.CRB_V_CR[-500:])
-        ax.plot(self.all_us[-500:])
-        ax.plot(self.cer.all_CS[-500:])
-        ax.draw()
-        
-        self.fig1.clf()
-        self.fig1.plot(self.all_target_x, self.all_target_y)
-        self.fig1.plot(self.circle[0],self.circle[1])
-        self.fig1.draw()
-
+        clf()
+        plot(self.cer.CRB_V_CR[-500:])
+        plot(self.all_us[-500:])
+        plot(self.cer.all_CS[-500:])
+        draw()
+        '''figure()
+        plot(self.all_target_x, self.all_target_y)
+        plot(self.circle[0],self.circle[1])
+        draw()
+        '''
 
 if __name__ == '__main__':
     cp=cerebellarPainter()
