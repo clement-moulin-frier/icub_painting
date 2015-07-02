@@ -4,13 +4,13 @@ import cerebellum
 import numpy as np
 
 class cerebellumInstance:
-    def __init__(self,US_size=1, CS_size=1,nBasis=20,k_NOI=0.5,LR=5.0, delay=1,SR=10.0,Range=1,update=30):
+    def __init__(self,US_size=1, CS_size=1,nBasis=20,k_NOI=0.5,LR=5.0, delay=1,SR=10.0,Range=1,update=30,cfile='basis_visual_sim.cfg'):
 
         # Configure Cerebellum
         self.US_size = US_size
         self.CS_size = CS_size  # CS size must be different
         self.crb_V = cerebellum.Cerebellum()
-        self.crb_V.config('basis_visual_sim.cfg')
+        self.crb_V.config(cfile)
         self.udp = update
         self.all_CS = []
 
