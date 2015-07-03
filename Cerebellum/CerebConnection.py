@@ -37,6 +37,7 @@ class cerebellarPainter():
         self.x_pos=[]
         self.y_pos=[]
         self.circle = [cos(array(range(360))*pi/180),sin(array(range(360))*pi/180)]
+        self.controller_response=0.
 
     def configure(self,plot_data=True):
         self.newTarget()
@@ -46,17 +47,7 @@ class cerebellarPainter():
         return True
 
     def newTarget(self):
-        print 'a'
-        if self.connect_cerebellum:
-            if len(self.cer.CRB_V_CR)!=0:
-                if self.crb_anticip:
-                    self.expl.sample(self.punishment, self.cer.CRB_V_CR[-1])
-                else:
-                    self.expl.sample(self.punishment,0 )
-            else:
-                self.expl.sample(self.punishment,0 )
-        else:
-            self.expl.sample(self.punishment,0)
+        self.expl.sample(self.controller_response)
 
         X = self.expl.current_pos[0]
         Y = self.expl.current_pos[1]
@@ -65,7 +56,7 @@ class cerebellarPainter():
         self.all_target_y.append(Y)
         #separate the data in a constant speed fashion
         n_dt = int(norm(array([X,Y]) - self.expl.previous_pos) / self.dt)
-        if n_dt==0:
+        '''if n_dt==0:
             self.expl.sample(False,0)
             X = self.expl.current_pos[0]
             Y = self.expl.current_pos[1]
@@ -74,7 +65,7 @@ class cerebellarPainter():
             #separate the data in a constant speed fashion
             n_dt = int(norm(array([X,Y]) - self.expl.previous_pos) / self.dt)
             print n_dt,X,Y
-            print norm(array([X,Y]) - self.expl.previous_pos)
+            print norm(array([X,Y]) - self.expl.previous_pos)'''
         n_dt = max(1,n_dt)
         print n_dt
         print norm(array([X,Y]) - self.expl.previous_pos)
@@ -83,40 +74,27 @@ class cerebellarPainter():
         return True
 
     def update(self, CS, US, plot_data=True):
-        if self.crb_anticip or self.punishment:
-            # If there's a reflexive movement, it has priority to the cerebellum
-            self.all_distance.append(CS)
-            self.all_us.append(US)
-            self.cer.update(CS, US)
-            if self.x_pos.size == 0:
-                self.crb_anticip = False
-                self.punishment = False
-                self.new_target = True
-        else:
-            # else, the cerebellum can take over whenever it wants
-            self.all_distance.append(cs)
-            self.all_us.append(US)
-            self.cer.update(CS,US)
-            if self.connect_cerebellum:
-                if len(self.cer.CRB_V_CR)!=0:
-                    if self.cer.CRB_V_CR[-1]>0.01:
-                        #print cer.CRB_V_CR[-1]
-                        self.crb_anticip = True
-                        self.new_target = True
-            if self.x_pos.size == 0:
-                self.new_target = True
-        if self.crb_anticip:
-            punishment = True
-
-        if self.punishment == False:
-            self.punishment = bool(US)
-        #Check if a new target has to be defined, and how
+        # the cerebellum can take over whenever it wants
+        self.all_distance.append(CS)
+        self.all_us.append(US)
+        self.cer.update(CS,US)
+        if self.connect_cerebellum:
+            if len(self.cer.CRB_V_CR)!=0:
+                if self.cer.CRB_V_CR[-1]>0.01:
+                    self.new_target = True
         if self.x_pos.size == 0:
+            self.new_target = True
+        reactive_response = US
+        cerebellum_response = self.cer.CRB_V_CR[-1]
+        self.controller_response = reactive_response + cerebellum_response
+
+        #Check if a new target has to be defined, and how
+        if self.new_target:
             self.newTarget()
             self.new_target = False
         # Plot if desired
         if plot_data:
-            if self.i%20==0:
+            if self.i%15==0:
                 self.updatePlot()
             self.i +=1
         return self.cer.CRB_V_CR

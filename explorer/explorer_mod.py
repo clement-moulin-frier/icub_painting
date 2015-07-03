@@ -18,26 +18,22 @@ class Explorer(object):
         self.previous_angle = 0.0
         #self.previous_pos = array([0.,0.])
 
-    def sample(self, neg_feedback=False,prop = 1.0):
+    def sample(self, input = 0.):
         """ Returns a new target x, y. The returned coordinate is also stored in self.current_pos.
             The previous coordinate is saved in self.previous_pos
 
             :param bool neg_feedback: indicate if there is a negative feedback due to the previous position or not. Default: False
-            :param float prop: scales the distance in case the feedback is provided by
-        """
+            :param float input: if null, performs random exploration. If not, moves in direction of the center proportionally. If equal to 1.: extreme case where it conpletely comes back to the center.        """
 
         tmp_current = copy(self.current_pos)
-        if neg_feedback:
+        if input > 0.01:  # Tresholded input, TO CHECK IF IT IS OK
             #angle = 0
             #angle = arctan2(self.origin[0] - tmp_current[0],self.origin[1] - tmp_current[1])* 180 / pi
             angle = arctan2(self.origin[1] - tmp_current[1],self.origin[0] - tmp_current[0])
             #print angle
-            if prop != 0:
-                dist = max(prop,1) *  norm(self.origin - tmp_current)
-            else:
-                dist = norm(self.origin - tmp_current)
+            dist = max(input, 1) *  norm(self.origin - tmp_current)
             #self.current_pos = tmp_current - self.previous_pos
-        else:
+        else:  # no input
             angle = 2*pi * rand()
             dist = self.dist_mu + self.dist_sigma * randn()
         self.current_pos += dist * array([cos(angle), sin(angle)])
