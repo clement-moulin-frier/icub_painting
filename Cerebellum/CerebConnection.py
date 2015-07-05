@@ -22,7 +22,7 @@ from matplotlib.pyplot import subplots, show, plot, clf, ion, draw, figure
 class cerebellarPainter():
     def __init__(self):
 
-        self.dt = 0.1
+        self.dt = 0.05
         self.all_us = []
         self.all_target_x = []
         self.all_target_y = []
