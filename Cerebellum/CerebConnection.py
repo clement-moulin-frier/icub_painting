@@ -22,7 +22,7 @@ from matplotlib.pyplot import subplots, show, plot, clf, ion, draw, figure
 class cerebellarPainter():
     def __init__(self):
 
-        self.dt = 0.05
+        self.dt = 0.1
         self.all_us = []
         self.all_target_x = []
         self.all_target_y = []
@@ -30,7 +30,7 @@ class cerebellarPainter():
         self.us=0
         self.punishment = False
         self.expl = Explorer(dist_mu = 0.3,dist_sigma=0.2,x=0.0,y=0.0)
-        self.cer = cerebellumInstance(CS_size=20, Range=0.5,k_NOI=0.35, nBasis=250,LR=70,delay=0.9,SR=1/self.dt,update=50,cfile='basis_visual_sim2.cfg')
+        self.cer = cerebellumInstance(CS_size=20, Range=0.03,k_NOI=0.35, nBasis=250,LR=75,delay=0.40,SR=1/self.dt,update=35,cfile='basis_visual_sim2.cfg')
         self.connect_cerebellum=True
         self.crb_anticip=False
         self.new_target = True
@@ -51,6 +51,7 @@ class cerebellarPainter():
 
         X = self.expl.current_pos[0]
         Y = self.expl.current_pos[1]
+        print "target x: " + str(X) + "  ,  target y: " + str(Y)
         
         self.all_target_x.append(X)
         self.all_target_y.append(Y)
@@ -67,8 +68,7 @@ class cerebellarPainter():
             print n_dt,X,Y
             print norm(array([X,Y]) - self.expl.previous_pos)'''
         n_dt = max(1,n_dt)
-        print n_dt
-        print norm(array([X,Y]) - self.expl.previous_pos)
+        
         self.x_pos = linspace(self.expl.previous_pos[0], X, n_dt)
         self.y_pos = linspace(self.expl.previous_pos[1], Y, n_dt)
         return True
@@ -87,21 +87,21 @@ class cerebellarPainter():
         reactive_response = US
         cerebellum_response = self.cer.CRB_V_CR[-1]
         self.controller_response = reactive_response + cerebellum_response
-
+        print "real CR: " + str(self.controller_response)
         #Check if a new target has to be defined, and how
         if self.new_target:
             self.newTarget()
             self.new_target = False
         # Plot if desired
         if plot_data:
-            if self.i%15==0:
+            if self.i%10==0:
                 self.updatePlot()
             self.i +=1
         return self.cer.CRB_V_CR
     
     def updatePlot(self):
         clf()
-        '''plot(self.cer.CRB_V_CR[-500:])
+        plot(self.cer.CRB_V_CR[-500:])
         plot(self.all_us[-500:])
         #plot(self.cer.all_CS[-500:])
         draw()
@@ -109,14 +109,14 @@ class cerebellarPainter():
         plot(self.all_target_x, self.all_target_y)
         plot(self.circle[0],self.circle[1])
         draw()
-        
+        '''
 
 if __name__ == '__main__':
     cp=cerebellarPainter()
     cp.configure()
 
     for n in range(1000):
-        print cp.x_pos[0]
+        #print cp.x_pos[0]
         dx = cp.x_pos[0]
         cp.x_pos = delete(cp.x_pos,0)
         dy = cp.y_pos[0]

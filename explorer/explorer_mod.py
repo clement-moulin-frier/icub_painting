@@ -31,7 +31,7 @@ class Explorer(object):
             #angle = arctan2(self.origin[0] - tmp_current[0],self.origin[1] - tmp_current[1])* 180 / pi
             angle = arctan2(self.origin[1] - tmp_current[1],self.origin[0] - tmp_current[0])
             #print angle
-            dist = max(input, 1) *  norm(self.origin - tmp_current)
+            dist = min(input, 1) *  norm(self.origin - tmp_current)
             #self.current_pos = tmp_current - self.previous_pos
         else:  # no input
             angle = 2*pi * rand()

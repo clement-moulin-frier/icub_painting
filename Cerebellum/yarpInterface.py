@@ -132,15 +132,15 @@ def sendCRPort(port,x,y,z):
     return True
 
 def calibrateXY(x,y):
-    minX=-0.4
-    ranX = 0.15
-    maxX=-minX+ranX
-    minY=-0.17
+    minX=-0.38
+    ranX = 0.16
+    maxX=minX+ranX
+    minY=-0.16
     ranY=0.32
     maxY=minY+ranY
-    dz=0.145
-    dx=minX + ranX*(x+1)/2
-    dy=minY + ranY*(y+1)/2
+    dz=0.1485
+    dx=max(min(maxX,-0.05 + minX + ranX*(x+1)/2),minX)
+    dy=max(min(maxY,+0.02 + minY + ranY*(y+1)/2),minY)
     return dx,dy,dz
 
 def __main__(yarpSim=False):
@@ -152,7 +152,7 @@ def __main__(yarpSim=False):
     portToCS="/cerebellum/context"+":i"#"/NNsound:i"    
     CSInput.open(portToCS)
 
-    if yarpSim:
+    if False:
         # Open port for simulated CS
         simcs = yarp.BufferedPortBottle()
         portName="/cerebellum/fakeCS"+":o"
@@ -186,7 +186,7 @@ def __main__(yarpSim=False):
     portToUS="/cerebellum/US"+":i"#"/NNsound:i"    
     USInput.open(portToUS)
 
-    if yarpSim:
+    if False:
         # Open port for simulated US
         simus =  yarp.BufferedPortBottle()
         portName="/cerebellum/fakeUS"+":o"#"/NNsound:i"    
@@ -208,7 +208,7 @@ def __main__(yarpSim=False):
     CROutput=yarp.BufferedPortBottle()
     portName="/cerebellum/CR"+":o"
     CROutput.open(portName)
-    if not yarpSim:
+    if not False:
         # Connect to rightArm
         portToController ="/xy/rpc"
 
@@ -249,7 +249,7 @@ def __main__(yarpSim=False):
     moveOscFigure(aCR)
     sendOscDimension(aCR)
     sendOscReset(aCR)
-    sendOscDistance(aCR, 0.1)
+    sendOscDistance(aCR, 0.12)
 
     n=0
     tactile_us = False
@@ -260,69 +260,75 @@ def __main__(yarpSim=False):
         print "Not a number"
     
     #while(True):
-    for ni in range(1000):
-        yarp.Time.delay(0.05)
+    for ni in range(10000):
+        yarp.Time.delay(0.1)
+        print "iteration: " + str(ni)
         
         dx = cp.x_pos[0]
         cp.x_pos = delete(cp.x_pos,0)
         dy = cp.y_pos[0]
         cp.y_pos = delete(cp.y_pos,0)
 
-        if yarpSim:
+        if False:
             CS,US = cs_us(dx,dy)
             sendSimData(simcs,CS)
             sendSimData(simus,US)
+        
 
         CS=[]
         US=[]
-        CSBottle = CSInput.read()
-        USBottle = USInput.read()
+        CSBottle = CSInput.read(False)
+        USBottle = USInput.read(False)
         
-        if CSBottle != None and USBottle != None:
+        if CSBottle != None:
 
             #print "updating loop: "
             for i in range(CSBottle.size()):
-                
-	            	c = CSBottle.get(i).asDouble()
-	            	 
-
+                c = CSBottle.get(i).asDouble()
+        else:
+            c=0.
+        if USBottle != None:
             for i in range(USBottle.size()):
                 #print i
                 u = max(0,USBottle.get(i).asDouble()) 
                 if u>0:
-                	u=1
+                    u=1
+        else:
+            u=0.
+        print "US: " + str(u)
+        #print "cs: " + str(c)
 
             # Update explorer/cerebellum
-            cp.update(c,u,True)
-            
+        cp.update(c,u,True)
+        
 
-            # Send data to motors
-            dx,dy,dz = calibrateXY(dx,dy)
-            sendCRPort(CROutput,dx,dy,dz)
-            # Send data to reactable
-            cmd = aCR.prepare()
-            x=dy+0.4
-            y=dx+0.5
-            cmd.clear()
-            cmd.addString('osc')
-            cmd.addString('/event')
-            cmd.addString('draw')
-            cmd.addString('setDrawing')
-            cmd.addDouble(x)
-            cmd.addDouble(y)
-            aCR.write()
-            print 'x = ' + str(dx/2+0.5) + '  ;   y = ' + str(dy/2+0.5)
+        # Send data to motors
+        dx,dy,dz = calibrateXY(dx,dy)
+        sendCRPort(CROutput,dx,dy,dz)
+        # Send data to reactable
+        cmd = aCR.prepare()
+        x=dy+0.4
+        y=dx+0.5
+        cmd.clear()
+        cmd.addString('osc')
+        cmd.addString('/event')
+        cmd.addString('draw')
+        cmd.addString('setDrawing')
+        cmd.addDouble(x)
+        cmd.addDouble(y)
+        aCR.write()
+        #print 'x = ' + str(x) + '  ;   y = ' + str(y)
 
-            USo = USOutput.prepare()
-            USo.clear()
-            try:
-                for n in range(len(US)):
-                	#print US[n]
-                	USo.addDouble(US[n])
-            except TypeError:
-            	#print US
-                USo.addDouble(float(US))
-            USOutput.write()
+        USo = USOutput.prepare()
+        USo.clear()
+        try:
+            for n in range(len(US)):
+            	#print US[n]
+            	USo.addDouble(US[n])
+        except TypeError:
+        	#print US
+            USo.addDouble(float(US))
+        USOutput.write()
     stopOscDrawer(aCR)
             
 if __name__ == "__main__":
